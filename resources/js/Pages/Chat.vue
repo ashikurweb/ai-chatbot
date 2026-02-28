@@ -396,18 +396,18 @@
                 />
               </div>
 
-              <!-- User Actions (Below Prompt) -->
-              <div v-if="msg.role === 'user'" class="flex items-center gap-4 mt-2 px-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+              <!-- AI Actions (Below Response) -->
+              <div v-if="msg.role !== 'user'" class="flex items-center gap-4 mt-2 px-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                <button @click="speakMessage(msg)" class="text-gray-500 hover:text-indigo-400 transition-colors" title="Speak">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                    <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                    <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
+                  </svg>
+                </button>
                 <button @click="copyToClipboard(msg.content)" class="text-gray-500 hover:text-indigo-400 transition-colors" title="Copy">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
                     <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
                     <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-                  </svg>
-                </button>
-                <button @click="editMessage(msg)" class="text-gray-500 hover:text-indigo-400 transition-colors" title="Edit">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
-                    <path d="M12 20h9" />
-                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                   </svg>
                 </button>
               </div>
@@ -1116,20 +1116,20 @@
                     <div class="flex items-center justify-between py-4 border-b" :class="isDark ? 'border-[#2f2f2f]' : 'border-gray-200'">
                        <span :class="isDark ? 'text-gray-200' : 'text-gray-800'">Voice</span>
                        <div class="flex items-center gap-2">
-                          <button :class="['flex items-center gap-1.5 px-3 py-2 rounded-lg border text-[13px] font-medium transition-colors', isDark ? 'border-[#3f3f3f] text-gray-300 hover:bg-[#2f2f2f] hover:text-white bg-[#2f2f2f]/50' : 'border-gray-300 text-gray-700 hover:bg-gray-100 bg-white']">
+                          <button @click="playTestVoice" :class="['flex items-center gap-1.5 px-3 py-2 rounded-lg border text-[13px] font-medium transition-colors', isDark ? 'border-[#3f3f3f] text-gray-300 hover:bg-[#2f2f2f] hover:text-white bg-[#2f2f2f]/50' : 'border-gray-300 text-gray-700 hover:bg-gray-100 bg-white']">
                              <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                              Play
                           </button>
                           
                           <div class="relative w-[140px]">
                             <button @click="openDropdown = openDropdown === 'voice' ? null : 'voice'" :class="['w-full flex items-center justify-between text-[14px] rounded-lg border px-3 py-2 cursor-pointer transition-colors focus:ring-1 focus:ring-indigo-500', isDark ? 'bg-[#212121] border-[#3f3f3f] text-white hover:bg-[#2f2f2f]' : 'bg-gray-50 border-gray-200 hover:bg-white']">
-                              <span>{{ personalizationSettings.voice }}</span>
+                              <span>{{ voices.find(v => v.name === personalizationSettings.voice)?.label || personalizationSettings.voice }}</span>
                               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                             </button>
                             <div v-if="openDropdown === 'voice'" class="absolute z-50 right-0 mt-2 w-[160px] rounded-xl shadow-xl py-1.5 border" :class="isDark ? 'bg-[#2f2f2f] border-[#3f3f3f]' : 'bg-white border-gray-200'">
-                               <button v-for="opt in ['Sol', 'Juniper']" :key="opt" @click="personalizationSettings.voice = opt; openDropdown = null" class="w-full flex items-center justify-between px-3 py-2 text-[14px] transition-colors" :class="isDark ? 'text-gray-200 hover:bg-[#3f3f3f]' : 'text-gray-800 hover:bg-gray-100'">
-                                  <span>{{ opt }}</span>
-                                  <svg v-if="personalizationSettings.voice === opt" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                               <button v-for="voice in voices" :key="voice.name" @click="personalizationSettings.voice = voice.name; openDropdown = null" class="w-full flex items-center justify-between px-3 py-2 text-[14px] transition-colors" :class="isDark ? 'text-gray-200 hover:bg-[#3f3f3f]' : 'text-gray-800 hover:bg-gray-100'">
+                                  <span>{{ voice.label }}</span>
+                                  <svg v-if="personalizationSettings.voice === voice.name" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                </button>
                             </div>
                           </div>
@@ -1216,6 +1216,7 @@
 import { ref, onMounted, nextTick, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
+import { voices } from '../voices.js';
 
 const props = defineProps({
     conversations: Array,
@@ -1784,7 +1785,7 @@ async function processVoiceInput(text) {
     
     // Once sendMessage completes, the latest bot message is the response
     const lastMessage = props.messages[props.messages.length - 1];
-    if (lastMessage && lastMessage.role === 'bot') {
+    if (lastMessage && lastMessage.role === 'assistant') {
        speakAIResponse(lastMessage.content);
     } else {
        // Failed, start listening again
@@ -1815,26 +1816,22 @@ function speakAIResponse(text) {
   const utterance = new SpeechSynthesisUtterance(cleanText);
 
   // Apply voice settings
-  const voices = window.speechSynthesis.getVoices();
+  const availableVoices = window.speechSynthesis.getVoices();
   const selectedVoiceName = personalizationSettings.value.voice;
+  const voiceDef = voices.find(v => v.name === selectedVoiceName);
   
-  // Attempt to find a matching voice - 'Sol' mapping to a male tone, 'Juniper' to female roughly
   let activeVoice = null;
-  if (voices.length > 0) {
-     if (selectedVoiceName === 'Sol') {
-         activeVoice = voices.find(v => v.name.includes('Male') || v.name.includes('Google UK English Male')) || voices[0];
-     } else {
-         activeVoice = voices.find(v => v.name.includes('Female') || v.name.includes('Google UK English Female') || v.name.includes('Samantha')) || voices[0];
-     }
+  if (availableVoices.length > 0) {
+    const voiceIndex = voices.findIndex(v => v.name === selectedVoiceName);
+    activeVoice = availableVoices[voiceIndex % availableVoices.length] || availableVoices[0];
   }
 
   if (activeVoice) {
     utterance.voice = activeVoice;
   }
   
-  // Pitch and rate for more natural feel
-  utterance.rate = 1.0;
-  utterance.pitch = selectedVoiceName === 'Sol' ? 0.9 : 1.1;
+  utterance.rate = voiceDef ? voiceDef.rate : 1.0;
+  utterance.pitch = voiceDef ? voiceDef.pitch : 1.0;
 
   utterance.onend = () => {
     // Start listening again after speaking
@@ -1853,11 +1850,61 @@ function speakAIResponse(text) {
   window.speechSynthesis.speak(utterance);
 }
 
+// Speak Message Function for Normal Chat TTS
+function speakMessage(msg) {
+  const cleanText = stripMarkdown(msg.content);
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+
+  // Apply voice settings
+  const availableVoices = window.speechSynthesis.getVoices();
+  const selectedVoiceName = personalizationSettings.value.voice;
+  const voiceDef = voices.find(v => v.name === selectedVoiceName);
+  
+  let activeVoice = null;
+  if (availableVoices.length > 0) {
+    const voiceIndex = voices.findIndex(v => v.name === selectedVoiceName);
+    activeVoice = availableVoices[voiceIndex % availableVoices.length] || availableVoices[0];
+  }
+
+  if (activeVoice) {
+    utterance.voice = activeVoice;
+  }
+  
+  utterance.rate = voiceDef ? voiceDef.rate : 1.0;
+  utterance.pitch = voiceDef ? voiceDef.pitch : 1.0;
+
+  window.speechSynthesis.speak(utterance);
+}
+
 // Ensure voices are loaded (Chrome sometimes needs a trigger)
 if (window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = () => {
     window.speechSynthesis.getVoices();
   };
+}
+
+// Test Voice Function
+function playTestVoice() {
+  const selected = personalizationSettings.value.voice;
+  const voiceDef = voices.find(v => v.name === selected);
+  if (!voiceDef) {
+    showToast('Voice not found', 'error');
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance("Hello, this is a test of the voice. How does it sound?");
+  const availableVoices = window.speechSynthesis.getVoices();
+  let activeVoice = null;
+  if (availableVoices.length > 0) {
+    const voiceIndex = voices.findIndex(v => v.name === selected);
+    activeVoice = availableVoices[voiceIndex % availableVoices.length] || availableVoices[0];
+  }
+  if (activeVoice) {
+    utterance.voice = activeVoice;
+  }
+  utterance.rate = voiceDef.rate;
+  utterance.pitch = voiceDef.pitch;
+  window.speechSynthesis.speak(utterance);
 }
 
 // ---------------------------------------------
