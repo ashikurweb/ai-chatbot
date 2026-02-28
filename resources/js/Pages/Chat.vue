@@ -600,6 +600,19 @@
                     <div class="w-1 bg-white animate-voice-bar h-3" style="animation-delay: 0.3s"></div>
                   </div>
                 </button>
+
+                <!-- Voice Mode Button (Headphones) -->
+                <button
+                  type="button"
+                  @click="openVoiceMode"
+                  class="p-2 rounded-full transition-all hover:bg-white/5 text-gray-500"
+                  title="Start Voice Session"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                    <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
+                  </svg>
+                </button>
                 
                 <button
                   type="submit"
@@ -622,8 +635,81 @@
           </p>
         </div>
       </footer>
+
+      <!-- Real-time Voice Mode Overlay -->
+      <Transition
+        enter-active-class="transition-all duration-500 ease-out"
+        enter-from-class="opacity-0 translate-y-8 scale-95"
+        enter-to-class="opacity-100 translate-y-0 scale-100"
+        leave-active-class="transition-all duration-300 ease-in"
+        leave-from-class="opacity-100 translate-y-0 scale-100"
+        leave-to-class="opacity-0 translate-y-8 scale-95"
+      >
+        <div v-if="showVoiceMode" class="fixed inset-0 z-200 flex flex-col items-center justify-between p-8" :class="isDark ? 'bg-[#171717] text-white' : 'bg-white text-gray-900'">
+          <!-- Top area: Close Button -->
+          <div class="w-full flex justify-end max-w-4xl mx-auto">
+            <button @click="closeVoiceMode" class="p-3 rounded-full hover:bg-gray-500/10 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Middle area: Animated Orb & Status -->
+          <div class="flex-1 flex flex-col items-center justify-center w-full">
+            <div class="relative w-48 h-48 sm:w-64 sm:h-64 flex items-center justify-center mb-12">
+              <!-- Animated background glowing orb -->
+              <div class="absolute inset-0 rounded-full blur-3xl opacity-30 animate-pulse transition-all duration-700"
+                   :class="[voiceModeState === 'speaking' ? activeAccentColor.bg : (voiceModeState === 'thinking' ? 'bg-white' : 'bg-gray-400')]"></div>
+              
+              <!-- Main interactive center -->
+              <div class="relative w-32 h-32 sm:w-40 sm:h-40 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 transform"
+                   :class="[
+                     voiceModeState === 'listening' ? 'scale-110 bg-gray-800' : '',
+                     voiceModeState === 'thinking' ? 'scale-100 bg-white shadow-white/30' : '',
+                     voiceModeState === 'speaking' ? `scale-105 ${activeAccentColor.bg} ${activeAccentColor.shadow}` : '',
+                     voiceModeState === 'idle' ? 'scale-100 bg-gray-700' : '',
+                   ]">
+                 <!-- Listening indicator -->
+                 <svg v-if="voiceModeState === 'listening' || voiceModeState === 'idle'" xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-white opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+                 
+                 <!-- Speaking bars -->
+                 <div v-if="voiceModeState === 'speaking'" class="flex gap-1.5 items-center justify-center h-10 w-full relative z-10">
+                    <div class="w-1.5 bg-white rounded-full animate-voice-bar h-4"></div>
+                    <div class="w-1.5 bg-white rounded-full animate-voice-bar h-8" style="animation-delay: 0.1s"></div>
+                    <div class="w-1.5 bg-white rounded-full animate-voice-bar h-10" style="animation-delay: 0.2s"></div>
+                    <div class="w-1.5 bg-white rounded-full animate-voice-bar h-6" style="animation-delay: 0.3s"></div>
+                    <div class="w-1.5 bg-white rounded-full animate-voice-bar h-8" style="animation-delay: 0.4s"></div>
+                 </div>
+
+                 <!-- Thinking spinner -->
+                 <svg v-if="voiceModeState === 'thinking'" class="w-10 h-10 text-gray-900 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              </div>
+            </div>
+
+            <!-- Status text & Optional Transcript -->
+            <div class="h-24 flex flex-col items-center justify-start text-center transition-opacity duration-300 w-full max-w-2xl" :class="[voiceModeState === 'idle' ? 'opacity-0' : 'opacity-100']">
+              <p class="text-lg font-medium tracking-wide mb-2" :class="voiceModeState === 'speaking' ? activeAccentColor.text : ''">
+                {{ voiceModeState === 'listening' ? 'Listening...' : (voiceModeState === 'thinking' ? 'Thinking...' : 'AI is speaking...') }}
+              </p>
+              
+              <!-- Real-time transcript when 'Separate Voice' is OFF -->
+              <p v-if="!personalizationSettings.separateVoice && inputMessage" class="text-sm opacity-60 line-clamp-3">
+                "{{ inputMessage }}"
+              </p>
+            </div>
+          </div>
+
+          <!-- Bottom controls (Mute / Pause) -->
+          <div class="w-full flex justify-center max-w-4xl mx-auto mb-8">
+            <button @click="toggleVoiceModePause" class="p-4 rounded-full transition-colors flex items-center justify-center shadow-lg"
+                    :class="[voiceModeMuted ? 'bg-red-500 hover:bg-red-600 text-white' : (isDark ? 'bg-[#2f2f2f] hover:bg-[#3f3f3f] text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-900')]">
+              <svg v-if="voiceModeMuted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path><path d="M17 16.95A7 7 0 0 1 5 12H3a9 9 0 0 0 11.53 8.53"></path><path d="M12 22v-3"></path></svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+            </button>
+          </div>
+        </div>
+      </Transition>
     </main>
- 
+
      <!-- Confirmation Modal -->
      <Transition
        enter-active-class="transition duration-300 ease-out"
@@ -1145,6 +1231,11 @@ const showUserMenu = ref(false);
 const showSettingsModal = ref(false);
 const activeSettingsTab = ref('personalization');
 
+// Voice Mode Refs
+const showVoiceMode = ref(false);
+const voiceModeState = ref('idle'); // 'idle', 'listening', 'thinking', 'speaking'
+const voiceModeMuted = ref(false);
+
 const openDropdown = ref(null);
 const personalizationSettings = ref({
   appearance: 'Dark',
@@ -1593,6 +1684,183 @@ function toggleVoiceInput() {
   recognition.start();
 }
 
+// --- Voice Mode Logic ---
+let voiceRecognition = null;
+
+function openVoiceMode() {
+  if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+    showToast('Voice mode requires a secure connection (HTTPS) or localhost.', 'error');
+    return;
+  }
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('Speech recognition not supported in this browser', 'error');
+    return;
+  }
+  if (!window.speechSynthesis) {
+    showToast('Speech synthesis not supported in this browser', 'error');
+    return;
+  }
+
+  showVoiceMode.value = true;
+  voiceModeMuted.value = false;
+  startVoiceListening();
+}
+
+function closeVoiceMode() {
+  showVoiceMode.value = false;
+  voiceModeState.value = 'idle';
+  if (voiceRecognition) {
+    voiceRecognition.stop();
+  }
+  window.speechSynthesis.cancel();
+}
+
+function toggleVoiceModePause() {
+  voiceModeMuted.value = !voiceModeMuted.value;
+  if (voiceModeMuted.value) {
+    voiceModeState.value = 'idle';
+    if (voiceRecognition) voiceRecognition.stop();
+    window.speechSynthesis.cancel();
+  } else {
+    startVoiceListening();
+  }
+}
+
+function startVoiceListening() {
+  if (voiceModeMuted.value || !showVoiceMode.value) return;
+
+  window.speechSynthesis.cancel(); // Stop talking if we are about to listen
+  voiceModeState.value = 'listening';
+
+  voiceRecognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  voiceRecognition.continuous = false;
+  voiceRecognition.interimResults = false;
+  
+  // Use selected spoken language if possible, else auto
+  voiceRecognition.lang = personalizationSettings.value.spokenLanguage === 'English' ? 'en-US' : 'en-US'; 
+
+  voiceRecognition.onresult = async (event) => {
+    const transcript = event.results[0][0].transcript;
+    if (transcript.trim()) {
+      await processVoiceInput(transcript);
+    } else {
+      startVoiceListening(); // Nothing said, start again
+    }
+  };
+
+  voiceRecognition.onerror = (event) => {
+    if (event.error !== 'aborted') {
+      console.error('Voice Mode recognition error:', event.error);
+    }
+    // Only restart listening if we aren't intentionally paused or closed
+    if (showVoiceMode.value && !voiceModeMuted.value && voiceModeState.value !== 'speaking' && voiceModeState.value !== 'thinking') {
+        setTimeout(startVoiceListening, 500);
+    }
+  };
+
+  voiceRecognition.onend = () => {
+    // If it ends naturally and we aren't processing anything, listen again
+    if (showVoiceMode.value && !voiceModeMuted.value && voiceModeState.value === 'listening') {
+       startVoiceListening();
+    }
+  };
+
+  try {
+    voiceRecognition.start();
+  } catch (e) {
+    console.error("Could not start recognition", e);
+  }
+}
+
+async function processVoiceInput(text) {
+  voiceModeState.value = 'thinking';
+  
+  // Send as a normal message
+  inputMessage.value = text;
+  
+  // Wait to get response
+  try {
+    await sendMessage();
+    
+    // Once sendMessage completes, the latest bot message is the response
+    const lastMessage = props.messages[props.messages.length - 1];
+    if (lastMessage && lastMessage.role === 'bot') {
+       speakAIResponse(lastMessage.content);
+    } else {
+       // Failed, start listening again
+       startVoiceListening();
+    }
+  } catch (error) {
+    console.error("Voice mode error:", error);
+    startVoiceListening();
+  }
+}
+
+function stripMarkdown(text) {
+  // Simple regex to remove bold, italic, code blocks, etc for cleaner reading
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1') // bold
+    .replace(/\*(.*?)\*/g, '$1') // italic
+    .replace(/`(.*?)`/g, '$1') // code
+    .replace(/```[\s\S]*?```/g, 'Code block removed.') // multiline code
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // links
+    .replace(/<[^>]*>?/gm, ''); // html tags
+}
+
+function speakAIResponse(text) {
+  if (!showVoiceMode.value || voiceModeMuted.value) return;
+
+  voiceModeState.value = 'speaking';
+  const cleanText = stripMarkdown(text);
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+
+  // Apply voice settings
+  const voices = window.speechSynthesis.getVoices();
+  const selectedVoiceName = personalizationSettings.value.voice;
+  
+  // Attempt to find a matching voice - 'Sol' mapping to a male tone, 'Juniper' to female roughly
+  let activeVoice = null;
+  if (voices.length > 0) {
+     if (selectedVoiceName === 'Sol') {
+         activeVoice = voices.find(v => v.name.includes('Male') || v.name.includes('Google UK English Male')) || voices[0];
+     } else {
+         activeVoice = voices.find(v => v.name.includes('Female') || v.name.includes('Google UK English Female') || v.name.includes('Samantha')) || voices[0];
+     }
+  }
+
+  if (activeVoice) {
+    utterance.voice = activeVoice;
+  }
+  
+  // Pitch and rate for more natural feel
+  utterance.rate = 1.0;
+  utterance.pitch = selectedVoiceName === 'Sol' ? 0.9 : 1.1;
+
+  utterance.onend = () => {
+    // Start listening again after speaking
+    if (showVoiceMode.value && !voiceModeMuted.value) {
+      startVoiceListening();
+    }
+  };
+
+  utterance.onerror = (e) => {
+    console.error("Speech Synthesis Error:", e);
+    if (showVoiceMode.value && !voiceModeMuted.value) {
+      startVoiceListening();
+    }
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+// Ensure voices are loaded (Chrome sometimes needs a trigger)
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => {
+    window.speechSynthesis.getVoices();
+  };
+}
+
+// ---------------------------------------------
 function editMessage(msg) {
   inputMessage.value = msg.content;
   isEditing.value = true;
