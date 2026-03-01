@@ -11,13 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('conversations', function (Blueprint $table) {
-            $table->foreignId('user_id')->nullable()->after('session_id')->constrained()->onDelete('cascade');
-        });
-
-        Schema::table('messages', function (Blueprint $table) {
-            $table->foreignId('user_id')->nullable()->after('session_id')->constrained()->onDelete('cascade');
-        });
+        // This migration used to add a `user_id` column to conversations and
+        // messages. Both tables now include the column in their create
+        // migrations, so there is nothing to do here. Keeping the file around
+        // prevents Laravel from re‑running earlier migrations that would break.
     }
 
     /**
@@ -25,14 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('conversations', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropColumn('user_id');
-        });
-
-        Schema::table('messages', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropColumn('user_id');
-        });
+        // no-op; the column is defined in the original table creations
     }
 };
